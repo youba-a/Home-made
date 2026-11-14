@@ -1,0 +1,14 @@
+name: Home Made - Première CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verification:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Afficher un message
+        run: echo "Bienvenue dans la CI de Home Made"
