@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <rect width="600" height="400" rx="24" fill="#f5efe5"/>
+  <path d="M230 190 300 130 370 190v94H230z" fill="#dce7d8" stroke="#47664d" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M280 284v-60h40v60" fill="#f5efe5" stroke="#47664d" stroke-width="6"/>
+  <text x="300" y="337" fill="#47664d" font-family="sans-serif" font-size="28" text-anchor="middle">Home Made</text>
+  <text x="300" y="373" fill="#6b7168" font-family="sans-serif" font-size="16" text-anchor="middle">Image de démonstration</text>
+</svg>

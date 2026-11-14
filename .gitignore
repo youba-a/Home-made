@@ -1,0 +1,11 @@
+# Configuration propre a ce PC et futurs fichiers secrets
+.local/
+.env
+.env.*
+!.env.example
+
+# Dependances et fichiers generes
+node_modules/
+vendor/
+dist/
+.sites-runtime/
