@@ -17,8 +17,8 @@ WHERE o.limite_achat <= UTC_TIMESTAMP()
     AND u.email IN ('vendeur.demo@example.test', 'atelier.demo@example.test', 'cuisine.demo@example.test');
 
 -- 1. Vendeur fictif ; mot de passe initial : DemoHomeMade2026! (haché ci-dessous).
-INSERT INTO users (name, email, password)
-SELECT 'Vendeur démo', 'vendeur.demo@example.test', '$2y$12$jbFQf4Wd9mvK6fNQt7psTeepXkJdEgvEQ0MW5Ic1gFt91VQk1Kr/G'
+INSERT INTO users (first_name, last_name, email, password)
+SELECT 'Vendeur', 'démo', 'vendeur.demo@example.test', '$2y$12$jbFQf4Wd9mvK6fNQt7psTeepXkJdEgvEQ0MW5Ic1gFt91VQk1Kr/G'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'vendeur.demo@example.test');
 
 SET @demo_vendeur = (SELECT id FROM users WHERE email = 'vendeur.demo@example.test');
@@ -126,14 +126,14 @@ WHERE NOT EXISTS (
 );
 
 -- 6. Deux vendeurs fictifs avec le même mot de passe initial : DemoHomeMade2026!
-INSERT INTO users (name, email, password)
-SELECT 'Atelier démo Bruxelles', 'atelier.demo@example.test', password
+INSERT INTO users (first_name, last_name, email, password)
+SELECT 'Atelier', 'démo Bruxelles', 'atelier.demo@example.test', password
 FROM users
 WHERE id = @demo_vendeur
     AND NOT EXISTS (SELECT 1 FROM users WHERE email = 'atelier.demo@example.test');
 
-INSERT INTO users (name, email, password)
-SELECT 'Cuisine démo Liège', 'cuisine.demo@example.test', password
+INSERT INTO users (first_name, last_name, email, password)
+SELECT 'Cuisine', 'démo Liège', 'cuisine.demo@example.test', password
 FROM users
 WHERE id = @demo_vendeur
     AND NOT EXISTS (SELECT 1 FROM users WHERE email = 'cuisine.demo@example.test');

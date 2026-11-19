@@ -44,7 +44,7 @@ class AnnonceResource extends JsonResource
             ] : null,
             'vendeur' => $this->whenLoaded('vendeur', fn () => [
                 'id' => $this->vendeur->id,
-                'nom' => $this->vendeur->name,
+                'nom' => $this->vendeur->displayName(),
             ]),
             'offres_repas' => OffreRepasResource::collection($offres),
         ];

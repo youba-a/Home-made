@@ -63,6 +63,7 @@ export function ProductCard({ product, onSelect }) {
         <div className="product-bottom">
           <span>{availabilityLabel(product)}</span>
           <button
+            className="product-open"
             type="button"
             onClick={() => onSelect(product)}
             aria-label={`Découvrir ${product.titre}`}

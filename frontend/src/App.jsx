@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { getAnnonces, getZones } from './api/annonces'
 import { ProductCard } from './components/ProductCard'
 import { ProductDialog } from './components/ProductDialog'
 import { AccountDialog } from './components/AccountDialog'
+import { MonEspace } from './components/MonEspace'
+import { PublishDialog } from './components/PublishDialog'
 import { getCurrentUser } from './api/auth'
 import './App.css'
 
@@ -12,11 +15,12 @@ const filters = [
   { value: 'REPAS', label: 'Repas maison' },
 ]
 
-function Brand() {
+function Brand({ onClick }) {
   return (
     <a
       className="brand"
       href="#accueil"
+      onClick={onClick}
       aria-label="Home Made, accueil"
     >
       <svg
@@ -55,7 +59,17 @@ function App() {
   const [zones, setZones] = useState([])
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [user, setUser] = useState(null)
+  // Affiche la fenêtre de connexion ou les actions du compte.
   const [accountOpen, setAccountOpen] = useState(false)
+  // Mémorise la section personnelle affichée. null ferme l'espace.
+  const [activeSection, setActiveSection] = useState(null)
+  const showPersonalSpace = Boolean(user && activeSection)
+  // Ouvre le formulaire d'annonce, indépendamment de la fenêtre de compte.
+  const [publishOpen, setPublishOpen] = useState(false)
+  // Affiche les liens de navigation derrière le bouton Menu sur mobile.
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [announcementsRevision, setAnnouncementsRevision] = useState(0)
   const { page, type: filter, q: search, zone_id: zone } = request
   const visibleProducts = catalogue.data
   const meta = catalogue.meta
@@ -118,8 +132,47 @@ function App() {
   }
 
   function openAccount() {
+    setMobileMenuOpen(false)
     setSelectedProduct(null)
     setAccountOpen(true)
+  }
+
+  function handlePublishClick() {
+    setMobileMenuOpen(false)
+    if (!user) {
+      openAccount()
+      return
+    }
+
+    setEditingId(null)
+    setPublishOpen(true)
+  }
+
+  function handlePublished(product) {
+    setPublishOpen(false)
+    setAnnouncementsRevision((revision) => revision + 1)
+    setRequest((previous) => ({ ...previous }))
+    setSelectedProduct(product)
+  }
+
+  function updateUser(nextUser) {
+    setUser(nextUser)
+    if (!nextUser) {
+      setActiveSection(null)
+      setPublishOpen(false)
+    }
+  }
+
+  function closeSpace() {
+    setActiveSection(null)
+  }
+
+  function followPublicLink() {
+    setMobileMenuOpen(false)
+    if (showPersonalSpace) {
+      // Réaffiche la cible du lien avant que le navigateur défile jusqu'à elle.
+      flushSync(closeSpace)
+    }
   }
 
   return (
@@ -127,15 +180,69 @@ function App() {
       <a
         className="skip-link"
         href="#catalogue"
+        onClick={followPublicLink}
       >
         Aller au catalogue
       </a>
-      <div className="top-note">Des mains passionnées. Des découvertes à partager.</div>
-      <header className="site-header shell">
-        <Brand />
-        <nav aria-label="Navigation principale">
-          <a href="#catalogue">Les découvertes</a>
-          <a href="#comment-ca-marche">L’esprit Home Made</a>
+      <div
+        className="top-note"
+        id="haut-de-page"
+      >
+        Des mains passionnées. Des découvertes à partager.
+      </div>
+      <header
+        className="site-header shell"
+        onKeyDown={(event) => {
+          if (mobileMenuOpen && event.key === 'Escape') {
+            setMobileMenuOpen(false)
+            event.currentTarget.querySelector('.mobile-menu-toggle')?.focus()
+          }
+        }}
+      >
+        <Brand onClick={followPublicLink} />
+        <button
+          className="mobile-menu-toggle"
+          type="button"
+          aria-controls="main-navigation"
+          aria-expanded={mobileMenuOpen}
+          onClick={() => setMobileMenuOpen((open) => !open)}
+        >
+          <span aria-hidden="true">{mobileMenuOpen ? '×' : '☰'}</span>
+          Menu
+        </button>
+        <nav
+          id="main-navigation"
+          className={mobileMenuOpen ? 'navigation-open' : undefined}
+          aria-label="Navigation principale"
+        >
+          <a
+            href="#accueil"
+            onClick={followPublicLink}
+          >
+            Accueil
+          </a>
+          <a
+            href="#catalogue"
+            onClick={followPublicLink}
+          >
+            Explorer
+          </a>
+          <button
+            className="publish-link"
+            type="button"
+            aria-haspopup="dialog"
+            onClick={handlePublishClick}
+          >
+            Publier
+          </button>
+          <button
+            className="mobile-account-link"
+            type="button"
+            aria-haspopup="dialog"
+            onClick={openAccount}
+          >
+            {user ? 'Mon compte' : 'Se connecter'}
+          </button>
         </nav>
         <button
           className="header-link account-button"
@@ -146,7 +253,31 @@ function App() {
         </button>
       </header>
 
-      <main id="accueil">
+      {showPersonalSpace && (
+        <main>
+          <MonEspace
+            user={user}
+            section={activeSection}
+            onSelectSection={setActiveSection}
+            onUserChange={(profile) => {
+              setUser((current) => (current?.id === profile.id ? profile : current))
+            }}
+            onClose={closeSpace}
+            onSelectProduct={setSelectedProduct}
+            onPublish={handlePublishClick}
+            onDeleted={() => setRequest((previous) => ({ ...previous }))}
+            announcementsRevision={announcementsRevision}
+            onEdit={(id) => {
+              setEditingId(id)
+              setPublishOpen(true)
+            }}
+          />
+        </main>
+      )}
+      <main
+        id="accueil"
+        hidden={showPersonalSpace}
+      >
         <section
           className="hero shell"
           aria-labelledby="hero-title"
@@ -434,10 +565,44 @@ function App() {
         </section>
       </main>
 
-      <footer className="site-footer shell">
-        <Brand />
-        <p>Du beau, du bon, et beaucoup de cœur.</p>
-        <a href="#accueil">Retour en haut ↑</a>
+      <footer className="site-footer">
+        <div className="site-footer-content shell">
+          <div className="site-footer-brand">
+            <Brand onClick={followPublicLink} />
+            <p>Des créations et des repas faits maison, à découvrir près de chez toi.</p>
+          </div>
+          <nav aria-label="Navigation de pied de page">
+            <h2>Découvrir</h2>
+            <a
+              href="#catalogue"
+              onClick={followPublicLink}
+            >
+              Explorer les annonces
+            </a>
+            <a
+              href="#comment-ca-marche"
+              onClick={followPublicLink}
+            >
+              L’esprit Home Made
+            </a>
+          </nav>
+          <div className="site-footer-pickup">
+            <h2>Retrait sur rendez-vous</h2>
+            <p>
+              La commune et les horaires sont sur la fiche. L’adresse exacte est
+              communiquée après confirmation de l’achat.
+            </p>
+          </div>
+        </div>
+        <div className="site-footer-bottom shell">
+          <span>Home Made · Projet scolaire</span>
+          <a
+            className="site-footer-top"
+            href="#haut-de-page"
+          >
+            Retour en haut <span aria-hidden="true">↑</span>
+          </a>
+        </div>
       </footer>
       <ProductDialog
         product={selectedProduct}
@@ -449,8 +614,16 @@ function App() {
         open={accountOpen}
         onClose={() => setAccountOpen(false)}
         user={user}
-        onUserChange={setUser}
+        onUserChange={updateUser}
+        onOpenSpace={setActiveSection}
       />
+      {user && publishOpen && (
+        <PublishDialog
+          editingId={editingId}
+          onClose={() => setPublishOpen(false)}
+          onPublished={handlePublished}
+        />
+      )}
     </>
   )
 }

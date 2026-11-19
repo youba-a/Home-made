@@ -1,11 +1,11 @@
 import { spawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
 import net from 'node:net'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const php = 'C:\\wamp64\\bin\\php\\php8.3.6\\php.exe'
+const php = 'C:\\php83\\php.exe'
 const vite = path.join(root, 'frontend/node_modules/vite/bin/vite.js')
 const router = path.join(
     root,
@@ -73,10 +73,16 @@ if (![php, vite, router].every(existsSync)) {
     process.exitCode = 1
 } else {
     if (!(await listening(8000))) {
+        const uploadTemp = path.join(root, 'backend/storage/app/private/uploads-tmp')
+        mkdirSync(uploadTemp, { recursive: true })
         console.log('Démarrage de Laravel sur le port 8000…')
         start(
             php,
             [
+                '-d',
+                `upload_tmp_dir=${uploadTemp}`,
+                '-d',
+                'display_errors=Off',
                 '-S',
                 '127.0.0.1:8000',
                 '-t',

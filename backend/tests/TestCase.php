@@ -17,7 +17,9 @@ abstract class TestCase extends BaseTestCase
 
         Schema::create('users', function (Blueprint $table): void {
             $table->id();
-            $table->string('name');
+            $table->string('first_name', 255)->nullable();
+            $table->string('last_name', 100)->nullable();
+            $table->unsignedBigInteger('commune_id')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
@@ -80,8 +82,8 @@ abstract class TestCase extends BaseTestCase
     protected function seedCatalogueReferences(): void
     {
         DB::table('users')->insert([
-            ['id' => 1, 'name' => 'Camille', 'email' => 'vendeur@example.test', 'password' => Hash::make('mot-de-passe-test'), 'remember_token' => 'jeton-prive'],
-            ['id' => 2, 'name' => 'Noé', 'email' => 'autre@example.test', 'password' => Hash::make('mot-de-passe-test'), 'remember_token' => null],
+            ['id' => 1, 'first_name' => 'Camille', 'email' => 'vendeur@example.test', 'password' => Hash::make('mot-de-passe-test'), 'remember_token' => 'jeton-prive'],
+            ['id' => 2, 'first_name' => 'Noé', 'email' => 'autre@example.test', 'password' => Hash::make('mot-de-passe-test'), 'remember_token' => null],
         ]);
         DB::table('zones')->insert([['id' => 1, 'nom' => 'Namur'], ['id' => 2, 'nom' => 'Bruxelles']]);
         DB::table('communes')->insert([

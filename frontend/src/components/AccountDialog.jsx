@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { login, register, logout } from '../api/auth'
+import { accountSections } from './accountSections'
+import { ProfileFields } from './ProfileFields'
 
-export function AccountDialog({ open, onClose, user, onUserChange }) {
+export function AccountDialog({ open, onClose, user, onUserChange, onOpenSpace }) {
   const ref = useRef(null)
   const [mode, setMode] = useState('connexion')
   const [pending, setPending] = useState(false)
@@ -86,13 +88,33 @@ export function AccountDialog({ open, onClose, user, onUserChange }) {
       )}
       {user ? (
         <div className="account-summary">
-          <p>
-            Bonjour <strong>{user.name}</strong>.
-          </p>
-          <p>{user.email}</p>
-          <p>Un seul compte pour acheter et vendre sur Home Made.</p>
+          <div className="account-identity">
+            <strong>{user.display_name}</strong>
+            <span>{user.email}</span>
+          </div>
+          <nav
+            className="account-menu"
+            aria-label="Sections du compte"
+          >
+            {accountSections.map(({ id, label }) => (
+              <button
+                key={id}
+                className={
+                  id === 'accueil' ? 'button button-primary' : 'button button-secondary'
+                }
+                type="button"
+                disabled={pending}
+                onClick={() => {
+                  close()
+                  onOpenSpace(id)
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
           <button
-            className="button button-secondary"
+            className="account-switch"
             type="button"
             disabled={pending}
             onClick={disconnect}
@@ -111,17 +133,7 @@ export function AccountDialog({ open, onClose, user, onUserChange }) {
             key={mode}
             className="account-form"
           >
-            {mode === 'inscription' && (
-              <label>
-                Votre nom
-                <input
-                  name="name"
-                  autoComplete="name"
-                  required
-                  maxLength={100}
-                />
-              </label>
-            )}
+            {mode === 'inscription' && <ProfileFields />}
             <label>
               Adresse email
               <input

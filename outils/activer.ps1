@@ -2,7 +2,7 @@
 # Ces changements concernent uniquement le terminal courant et ses processus.
 & {
     $projectRoot = Split-Path -Parent $PSScriptRoot
-    $projectPhpDir = 'C:\wamp64\bin\php\php8.3.6'
+    $projectPhpDir = 'C:\php83'
     $projectMysqlDir = 'C:\wamp64\bin\mysql\mysql8.3.0\bin'
     $projectPhpConfig = Join-Path $projectRoot '.local\php'
 
@@ -25,6 +25,6 @@
     $env:PHP_INI_SCAN_DIR = Join-Path $projectPhpConfig 'conf.d'
 
     Write-Host 'Environnement Home Made active dans ce terminal.' -ForegroundColor Green
-    Write-Host 'PHP 8.3 (Wamp), Composer, Node.js/npm et client MySQL disponibles.'
+    Write-Host 'PHP 8.3 (C:\php83), Composer, Node.js/npm et client MySQL disponibles.'
     Write-Host 'Le serveur MySQL doit etre demarre separement.'
 }

@@ -18,7 +18,7 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['data' => $request->user()?->only(['id', 'name', 'email'])]);
+        return $this->profileResponse($request->user());
     }
 
     public function register(Request $request): JsonResponse
@@ -28,7 +28,9 @@ class AuthController extends Controller
         }
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'commune_id' => ['nullable', 'integer', 'exists:communes,id'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'max:128', 'confirmed'],
         ], [
@@ -36,11 +38,14 @@ class AuthController extends Controller
             'email.email' => 'Saisis une adresse email valide.',
             'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
             'password.confirmed' => 'Les deux mots de passe ne correspondent pas.',
-            'name.required' => 'Indique ton nom.',
+            'first_name.required' => 'Indique ton prénom.',
+            'last_name.required' => 'Indique ton nom.',
         ]);
 
         $user = User::create([
-            'name' => trim($data['name']),
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'commune_id' => $data['commune_id'] ?? null,
             'email' => mb_strtolower(trim($data['email'])),
             'password' => $data['password'],
         ]);
@@ -48,7 +53,7 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return response()->json(['data' => $user->only(['id', 'name', 'email'])], 201);
+        return $this->profileResponse($user, 201);
     }
 
     public function login(Request $request): JsonResponse
@@ -64,7 +69,37 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return response()->json(['data' => $request->user()->only(['id', 'name', 'email'])]);
+        return $this->profileResponse($request->user());
+    }
+
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'commune_id' => ['sometimes', 'nullable', 'integer', 'exists:communes,id'],
+        ], [
+            'first_name.required' => 'Indique ton prénom.',
+            'last_name.required' => 'Indique ton nom.',
+            'commune_id.exists' => 'Choisis une commune disponible.',
+        ]);
+
+        $user = $request->user();
+        $user->update($data);
+
+        return $this->profileResponse($user);
+    }
+
+    private function profileResponse(?User $user, int $status = 200): JsonResponse
+    {
+        $data = $user === null ? null : [
+            ...$user->load('commune:id,nom,code_postal')->only([
+                'id', 'first_name', 'last_name', 'email', 'commune_id', 'commune',
+            ]),
+            'display_name' => $user->displayName(),
+        ];
+
+        return response()->json(['data' => $data], $status);
     }
 
     public function logout(Request $request): JsonResponse

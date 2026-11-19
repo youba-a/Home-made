@@ -2,12 +2,28 @@
 <?php
 
 use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Console\ServeCommand;
 use Symfony\Component\Console\Input\ArgvInput;
 
 define('LARAVEL_START', microtime(true));
 
 // Register the Composer autoloader...
 require __DIR__.'/vendor/autoload.php';
+
+if (PHP_OS_FAMILY === 'Windows' && ($_SERVER['argv'][1] ?? null) === 'serve') {
+    $uploadDirectory = __DIR__.'/storage/app/private/uploads-tmp';
+
+    if (! is_dir($uploadDirectory) && ! mkdir($uploadDirectory, 0777, true) && ! is_dir($uploadDirectory)) {
+        fwrite(STDERR, "Impossible de créer le dossier temporaire de Home Made.\n");
+        exit(1);
+    }
+
+    foreach (['TEMP', 'TMP'] as $variable) {
+        putenv($variable.'='.$uploadDirectory);
+        $_ENV[$variable] = $uploadDirectory;
+        ServeCommand::$passthroughVariables[] = $variable;
+    }
+}
 
 // Bootstrap Laravel and handle the command...
 /** @var Application $app */

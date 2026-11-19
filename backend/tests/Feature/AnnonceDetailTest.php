@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class AnnonceDetailTest extends TestCase
@@ -54,6 +56,68 @@ class AnnonceDetailTest extends TestCase
             ->assertJsonMissingPath('data.vendeur.password')
             ->assertJsonMissingPath('data.vendeur.remember_token')
             ->assertJsonCount(0, 'data.offres_repas');
+    }
+
+    public function test_my_announcements_requires_a_session_and_only_lists_the_sellers_own_announcements(): void
+    {
+        $this->getJson('/api/v1/mes-annonces')->assertUnauthorized();
+
+        $this->actingAs(User::findOrFail(1))
+            ->getJson('/api/v1/mes-annonces?vendeur_id=2')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.id', 2)
+            ->assertJsonPath('data.1.id', 1);
+
+        $this->actingAs(User::findOrFail(2))
+            ->getJson('/api/v1/mes-annonces')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', 3);
+    }
+
+    public function test_a_seller_can_only_delete_their_own_unsold_announcements(): void
+    {
+        Schema::create('commandes', function (Blueprint $table): void {
+            $table->unsignedBigInteger('annonce_id');
+            $table->string('statut');
+        });
+
+        $this->deleteJson('/api/v1/mes-annonces/1')->assertUnauthorized();
+
+        $this->actingAs(User::findOrFail(1));
+        $this->deleteJson('/api/v1/mes-annonces/3')->assertNotFound();
+        $this->assertDatabaseHas('annonces', ['id' => 3]);
+
+        DB::table('annonces')->where('id', 1)->update(['etat_objet' => 'VENDU']);
+        $this->deleteJson('/api/v1/mes-annonces/1')->assertConflict();
+
+        foreach (['EN_COURS', 'CONFIRMEE'] as $status) {
+            DB::table('commandes')->insert(['annonce_id' => 2, 'statut' => $status]);
+            $this->deleteJson('/api/v1/mes-annonces/2')->assertConflict();
+            $this->assertDatabaseHas('offres_repas', ['annonce_id' => 2]);
+            DB::table('commandes')->where('annonce_id', 2)->delete();
+        }
+
+        DB::table('annonces')->where('id', 1)->update(['etat_objet' => 'DISPONIBLE']);
+        $this->deleteJson('/api/v1/mes-annonces/1')->assertNoContent();
+        $this->deleteJson('/api/v1/mes-annonces/2')->assertNoContent();
+        $this->getJson('/api/v1/annonces/2')->assertNotFound();
+        $this->assertDatabaseMissing('annonces', ['id' => 1]);
+        $this->assertDatabaseMissing('repas', ['annonce_id' => 2]);
+        $this->assertDatabaseMissing('offres_repas', ['annonce_id' => 2]);
+    }
+
+    public function test_an_announcement_displays_the_sellers_structured_name(): void
+    {
+        User::findOrFail(1)->update([
+            'first_name' => 'Camille',
+            'last_name' => 'Martin',
+        ]);
+
+        $this->getJson('/api/v1/annonces')
+            ->assertOk()
+            ->assertJsonPath('data.0.vendeur.nom', 'Camille Martin');
     }
 
     public function test_a_meal_only_contains_its_own_offers_and_pickup_details(): void

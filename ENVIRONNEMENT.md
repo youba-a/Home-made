@@ -4,40 +4,35 @@
 
 1. Démarrer MySQL dans WampServer (port 3306).
 2. Ouvrir un terminal dans le dossier `home made`.
-3. Exécuter :
+3. Démarrer Laravel et React avec le lanceur du projet :
 
 ```powershell
 node outils/demarrer.mjs
 ```
 
 4. Ouvrir http://127.0.0.1:5173/ et garder le terminal ouvert.
-5. `Ctrl+C` arrête les serveurs lancés par cette commande. Un serveur déjà ouvert dans un autre terminal doit être arrêté dans son propre terminal.
+5. `Ctrl+C` arrête les serveurs démarrés dans ce terminal. Pour activer le dossier temporaire des photos, arrêter d’abord tout ancien `php artisan serve` qui occupe le port 8000.
 
-Ce script utilise les outils déjà préparés sur ce PC : PHP 8.3.6 de Wamp, Node.js, MySQL et la configuration `.local/php`. Il ne réinstalle rien. Il conserve les serveurs qui utilisent déjà les ports 8000 ou 5173.
+PHP 8.3.36 est installé dans `C:\php83`, placé avant XAMPP dans le PATH Windows. Il charge automatiquement `C:\php83\php.ini`, qui active notamment MySQL et les extensions nécessaires à Laravel. Le script d'activation n'est donc plus nécessaire pour les commandes PHP habituelles.
+
+Après une modification du PATH Windows, fermer complètement puis rouvrir VS Code et les autres applications de terminal pour qu'elles récupèrent les nouveaux réglages. Vérifier dans un nouveau terminal :
+
+```powershell
+where.exe php
+php -v
+php --ini
+```
 
 Le site React utilise le port 5173 ; Laravel fournit l’API et les photos sur le port 8000. Wamp fournit MySQL ; Apache n’est pas nécessaire pour ces deux serveurs de développement.
 
-Pour démarrer séparément :
-
-```powershell
-# Terminal 1, depuis la racine
-. .\outils\activer.ps1
-cd backend
-php artisan serve --host=127.0.0.1 --port=8000
-```
-
-```powershell
-# Terminal 2, depuis la racine
-cd frontend
-npm.cmd run dev
-```
+Le lanceur utilise la configuration locale `.local/php/php.ini` et réserve `backend/storage/app/private/uploads-tmp` aux fichiers envoyés. Il conserve les serveurs qui occupent déjà les ports 8000 ou 5173.
 
 ## Organisation actuelle
 
 - `frontend/` : interface React, cartes, fiches et compte.
 - `backend/` : premier service Laravel, Catalogue et comptes.
 - `outils/` : activation de PHP et démarrage local.
-- `.local/php/` : configuration PHP locale à conserver.
+- `.local/php/` : configuration PHP utilisée par les scripts facultatifs.
 
 Une seule base MySQL est utilisée : `home_made_db`. Le cahier prévoit deux services métier Laravel, Catalogue et Commandes. Le service Commandes n’est pas encore créé ; React est leur interface, pas le deuxième service métier.
 
@@ -56,7 +51,7 @@ DB_PASSWORD=
 
 `backend/config/database.php` lit ces valeurs. Les dates sont enregistrées en UTC et affichées en heure belge.
 
-- `backend/database/home_made.sql` : structure complète pour une base vide, utilisable dans phpMyAdmin. Ne pas le réimporter dans la base existante.
+- `backend/database/home_made.sql` : structure initiale lue par la première migration. Pour une base à jour, exécuter `php artisan migrate` avant de charger les données de démonstration.
 - `backend/database/migrations/2026_11_12_143135_prepare_home_made_database.php` : installation des tables manquantes et adaptation de l’ancienne structure. Déjà appliquée localement ; elle conserve les produits.
 - `backend/database/donnees_demo.sql` : exemples avec photos ; réexécutable sans dupliquer les annonces.
 - `backend/database/seeders/DatabaseSeeder.php` : permet de charger ces mêmes exemples avec `php artisan db:seed`.
@@ -70,7 +65,7 @@ Les dix tables métier sont réparties ainsi :
 
 La table technique `migrations` mémorise les migrations exécutées. Aucun lien SQL entre les deux services métier : leurs futures API devront vérifier ces références.
 
-Pour une installation vide, après avoir créé la base et renseigné `.env`, depuis `backend` avec l’environnement activé :
+Pour une installation vide, après avoir créé la base et renseigné `.env`, depuis `backend` :
 
 ```powershell
 php artisan migrate
@@ -122,7 +117,7 @@ npm.cmd run build
 ```
 
 ```powershell
-# Dans backend, après activation de l’environnement
+# Dans backend
 php artisan test --compact
 ```
 

@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             throw new RuntimeException('Les données de démonstration nécessitent MySQL.');
         }
 
+        $this->call(CommuneSeeder::class);
         DB::unprepared(file_get_contents(database_path('donnees_demo.sql')));
     }
 }
