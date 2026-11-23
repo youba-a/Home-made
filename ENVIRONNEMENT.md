@@ -75,13 +75,13 @@ php artisan storage:link
 
 Pour l’installation actuelle, tout cela est déjà préparé. Ne pas utiliser `migrate:fresh` : cette commande supprime les tables. La migration d’adaptation ne propose pas de retour arrière destructeur.
 
-Les exemples contiennent 18 annonces, dont 10 objets et 8 repas, trois vendeurs fictifs et trois zones. Une seule offre est publiée par repas ; deux anciennes offres restent archivées. Chaque objet possède son lieu et son créneau de retrait. `limite_achat` remplace l’ancienne limite de validation des repas.
+Les exemples contiennent 18 annonces, dont 10 objets et 8 repas, et trois vendeurs fictifs. Le seeder charge 30 localités dans huit zones. Chaque objet possède un lieu et un créneau de retrait. Pour un repas, l’offre active indique les horaires, les portions et la limite d’achat.
 
 ## Photos
 
 Les fichiers se trouvent dans `backend/storage/app/public/produits/`. Le champ `annonces.image` conserve leur chemin, par exemple `/storage/produits/demo-bougie.jpg`. Le lien `backend/public/storage` les rend accessibles ; il pointe vers les mêmes fichiers et ne les duplique pas.
 
-Le formulaire de publication et l’envoi de nouvelles photos restent à développer.
+La publication permet d’envoyer une photo pour un objet ou un repas. En modification, le formulaire permet de conserver la photo actuelle ou de la remplacer.
 
 ## Parcours d’un produit à l’écran
 
@@ -105,7 +105,7 @@ L’adresse exacte de retrait et les données privées du vendeur sont exclues d
 
 Le bouton « Se connecter » ouvre `frontend/src/components/AccountDialog.jsx` : inscription, connexion, consultation du compte et déconnexion. `frontend/src/api/auth.js` communique avec `AuthController.php` via `/api/v1/auth/`.
 
-Laravel conserve une session dans un cookie, hache les mots de passe et vérifie les données. Le formulaire récupère un jeton CSRF avant chaque envoi. Un seul compte servira pour acheter et vendre. Les trois vendeurs de démonstration utilisent initialement le mot de passe `DemoHomeMade2026!` : `vendeur.demo@example.test`, `atelier.demo@example.test` et `cuisine.demo@example.test`. MySQL enregistre son hash. Un nouvel import des exemples ne remplace pas le mot de passe d’un compte déjà présent.
+Laravel utilise un cookie de session, hache les mots de passe et vérifie les données. Le formulaire récupère un jeton CSRF pour les requêtes qui modifient les données. Pour essayer le parcours vendeur, crée un compte de test depuis l’interface. Les comptes fournis avec les exemples sont destinés au développement local.
 
 ## Vérifier et modifier
 
@@ -125,4 +125,4 @@ Les tests automatisés utilisent SQLite en mémoire, sans modifier MySQL. Les so
 
 ## Suite du travail
 
-L’achat, les propositions de prix, la publication des annonces et les commandes restent à développer. Le schéma les prépare ; les boutons et API métier correspondants ne sont pas encore présents. Ensuite : deuxième application Laravel, échanges entre services, vérifications de stock, Docker, GitHub et déploiement selon les exigences du professeur.
+La prochaine étape est le service Laravel Commandes. Il devra gérer l’achat simulé, les propositions de prix, les vérifications de stock avec Catalogue et les historiques d’achats et de ventes. La conteneurisation Docker et le déploiement restent à préparer.
